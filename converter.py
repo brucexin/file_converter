@@ -11,6 +11,7 @@ import sys
 import os
 from os import path
 import codecs
+import shutil
 
 #third party library import
 import chardet
@@ -23,7 +24,7 @@ def re_encoding_txt(fileName, newFileName):
     buf = open(fileName, 'rb').read(_MAX_DETECT_SIZE)
     result = chardet.detect(buf)
     if result['confidence'] >= 0.5:
-        abuf = open(fileName, 'rb').read()
+        abuf = unicode(open(fileName, 'rb').read(), result['encoding'])
         codecs.open(newFileName, 'wb', 'utf8').write(abuf)
         return newFileName
     else:
@@ -36,33 +37,33 @@ def _convert_tiff(filePath, newFileName, newFilePath):
     os.system('unoconv -f pdf -o %s %s'%(tmpPDF, filePath))
     tmpTIF = path.join('/tmp', newFileName)
     os.system('gs -q -sDEVICE=tiffg3 -r204x98 -dBATCH -dPDFFitPage -dNOPAUSE -sOutputFile=%s %s'%(tmpTIF, tmpPDF))
-    tf = tifffile.Tifffile(tmpTIF)
+    tf = tifffile.TiffFile(tmpTIF)
     tmpPath = _rename_tiff_for_page(tmpTIF)
-    os.system('mv %s %s'%(tmpPath, newFilePath))
+    shutil.move(tmpPath, newFilePath)
     return outPath
 
 
 def _rename_tiff_for_page(filePath):
-    baseName, _ = path.splitext(fileName)
-    tf = tifffile.Tifffile(fileName)
+    baseName, _ = path.splitext(filePath)
+    tf = tifffile.TiffFile(filePath)
     pageNum = len(tf.pages)
     outPath = path.join('%s_%d.tif'%(baseName, pageNum))
-    os.system('mv %s %s'%(filePath, outPath))
+    shutil.move(filePath, outPath)
     return outPath
 
 
 def _convert_tiff_name(filePath, newFileName, newFilePath):
     basePath, fileName = path.split(filePath)
     tmpPath = path.join('/tmp', newFileName)
-    os.system('mv %s %s'%(filePath, tmpPath))
+    shutil.move(filePath, tmpPath))
     outPath = _rename_tiff_for_page(tmpPath)
-    os.system('mv %s %s'%(outPath, newFilePath))
+    shutil.move(outPath, newFilePath))
     outBasePath, outFileName = path.split(outPath)
     return path.join(newFilePath, outFileName)
 
 
 def convert_tiff(filePath, newFileName, newFilePath):
-    _, extName = path.splitext(fileName)
+    _, extName = path.splitext(filePath)
     if extName not in _SUPPORTED_FILE_TYPE:
         raise NotImplemented(extName)
 
@@ -78,9 +79,10 @@ def convert_tiff(filePath, newFileName, newFilePath):
 
 
 if __name__ == '__main__':
+    print sys.argv
     if len(sys.argv) < 2 or len(sys.argv) > 3:
         print "Usage: converter <infile> [outPath]"
-        return 0
+        exit(0)
 
     inPath = sys.argv[1]
     if len(sys.argv) == 3:
