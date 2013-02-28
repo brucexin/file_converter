@@ -55,7 +55,7 @@ def _rename_tiff_for_page(filePath):
 def _convert_tiff_name(filePath, newFileName, newFilePath):
     basePath, fileName = path.split(filePath)
     tmpPath = path.join('/tmp', newFileName)
-    shutil.move(filePath, tmpPath))
+    shutil.move(filePath, tmpPath)
     outPath = _rename_tiff_for_page(tmpPath)
     shutil.move(outPath, newFilePath))
     outBasePath, outFileName = path.split(outPath)
